@@ -1,4 +1,4 @@
-package com.bianeck.minhasfinancas.model.entity;
+package com.bianeck.minhasfinancas.model.enums;
 
 public enum TipoLancamento {
 
