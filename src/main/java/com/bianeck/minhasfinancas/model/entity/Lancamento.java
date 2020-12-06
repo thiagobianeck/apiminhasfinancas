@@ -2,8 +2,10 @@ package com.bianeck.minhasfinancas.model.entity;
 
 import com.bianeck.minhasfinancas.model.enums.StatusLancamento;
 import com.bianeck.minhasfinancas.model.enums.TipoLancamento;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
 
 import javax.persistence.*;
@@ -14,6 +16,8 @@ import java.time.LocalDate;
 @Table(name = "lancamento", schema = "financas")
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Lancamento {
 
     @Id
