@@ -3,6 +3,7 @@ package com.bianeck.minhasfinancas.service;
 import com.bianeck.minhasfinancas.model.entity.Lancamento;
 import com.bianeck.minhasfinancas.model.enums.StatusLancamento;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,4 +22,6 @@ public interface LancamentoService {
     void validar(Lancamento lancamento);
 
     Optional<Lancamento> obterPorId(Long id);
+
+    BigDecimal obterSaldoPorUsuario(Long id);
 }
