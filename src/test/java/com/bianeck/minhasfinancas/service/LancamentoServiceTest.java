@@ -5,19 +5,22 @@ import com.bianeck.minhasfinancas.model.entity.Lancamento;
 import com.bianeck.minhasfinancas.model.entity.Usuario;
 import com.bianeck.minhasfinancas.model.enums.StatusLancamento;
 import com.bianeck.minhasfinancas.model.repository.LancamentoRepository;
-import com.bianeck.minhasfinancas.model.repository.LancamentoRepositoryTest;
 import com.bianeck.minhasfinancas.service.impl.LancamentoServiceImpl;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.data.domain.Example;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 import static com.bianeck.minhasfinancas.model.repository.LancamentoRepositoryTest.criarLancamento;
 import static org.assertj.core.api.Assertions.*;
@@ -109,5 +112,104 @@ public class LancamentoServiceTest {
 
         Mockito.verify(repository, Mockito.never()).delete(lancamento);
     }
+
+    @Test
+    @DisplayName("Deve filtrar lançamentos.")
+    public void deveFiltrarLancamentos() {
+        Lancamento lancamento = criarLancamento();
+        lancamento.setId(1L);
+
+        List<Lancamento> lista = Arrays.asList(lancamento);
+
+        Mockito.when(repository.findAll(Mockito.any(Example.class))).thenReturn(lista);
+
+        List<Lancamento> resultado = service.buscar(lancamento);
+
+        assertThat(resultado).isNotEmpty().hasSize(1).contains(lancamento);
+
+    }
+
+    @Test
+    @DisplayName("Deve atualizar o Status de um lancamento")
+    public void deveAtualizarOStatusDeUmLancamento() {
+        Lancamento lancamento = criarLancamento();
+        lancamento.setId(1L);
+        lancamento.setStatus(StatusLancamento.PENDENTE);
+
+        StatusLancamento novoStatus = StatusLancamento.EFETIVADO;
+
+        Mockito.doReturn(lancamento).when(service).atualizar(lancamento);
+
+        service.atualizarStatus(lancamento, novoStatus);
+
+        assertThat(lancamento.getStatus()).isEqualTo(novoStatus);
+        Mockito.verify(service).atualizar(lancamento);
+
+    }
+
+    @Test
+    @DisplayName("Deve obter um lançamento por id.")
+    public void deveObterUmLancamentoPorId() {
+        Lancamento lancamento = criarLancamento();
+        Long id = 1L;
+        lancamento.setId(id);
+
+        Mockito.when(repository.findById(id)).thenReturn(Optional.of(lancamento));
+
+        Optional<Lancamento> resultado = service.obterPorId(id);
+
+        assertThat(resultado.isPresent()).isTrue();
+
+    }
+
+    @Test
+    @DisplayName("Deve retornar vazio quando o lancamento não existe.")
+    public void deveRetornarVazioQuandoOLancamentoNaoExiste() {
+        Lancamento lancamento = criarLancamento();
+        Long id = 1L;
+        lancamento.setId(id);
+
+        Mockito.when(repository.findById(id)).thenReturn(Optional.empty());
+
+        Optional<Lancamento> resultado = service.obterPorId(id);
+
+        assertThat(resultado.isPresent()).isFalse();
+
+    }
+
+    @Test
+    @DisplayName("Deve lançar erros ao validar um lançamento.")
+    public void deveLancarErrosAoValidarUmLancamento() {
+        Lancamento lancamento = new Lancamento();
+
+        Throwable erro = catchThrowable(() -> service.validar(lancamento));
+
+        testaValidacao(erro, lancamento, "Informe uma Descrição válida.");
+        lancamento.setDescricao("");
+        testaValidacao(erro, lancamento, "Informe uma Descrição válida.");
+        lancamento.setDescricao("Salário");
+        testaValidacao(erro, lancamento, "Informe um Mês válido.");
+        lancamento.setMes(12);
+        testaValidacao(erro, lancamento, "Informe um Ano válido.");
+        lancamento.setAno(1984);
+        testaValidacao(erro, lancamento, "Informe um Usuário.");
+        lancamento.setUsuario(Usuario.builder().id(1L).build());
+        testaValidacao(erro, lancamento, "Informe um Valor válido.");
+        lancamento.setValor(BigDecimal.TEN);
+        testaValidacao(erro, lancamento, "Informe um tipo de lançamento.");
+        lancamento.setStatus(StatusLancamento.PENDENTE);
+
+    }
+
+    private void testaValidacao(Throwable erro, Lancamento lancamento, String mensagem) {
+        erro = catchThrowable(() -> service.validar(lancamento));
+        assertThat(erro).isInstanceOf(RegraNegocioException.class).hasMessage(mensagem);
+    }
+
+//        throw new RegraNegocioException("Informe um Mês válido.");
+//        throw new RegraNegocioException("Informe um Ano válido.");
+//        throw new RegraNegocioException("Informe um Usuário.");
+//        throw new RegraNegocioException("Informe um Valor válido.");
+//        throw new RegraNegocioException("Informe um tipo de lançamento.");
 
 }
